@@ -151,6 +151,8 @@ void MX_USART3_UART_Init(void)
   NVIC_EnableIRQ(USART3_IRQn);
 
   /* USER CODE BEGIN USART3_Init 1 */
+  LL_DMA_EnableIT_TC(DMA2, LL_DMA_CHANNEL_3);
+  LL_USART_EnableIT_RXNE(USART3); // 使能接收缓冲区非空中断
 
   /* USER CODE END USART3_Init 1 */
   USART_InitStruct.BaudRate = 115200;
