@@ -138,12 +138,8 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-//	static uint8_t Pos[16];
-	static float para[4];
-//	UART_DMA_Transmit(Pos, 16);
-//	bool flag = 0;
-	int state = 0;
-//	uint8_t index = 0;
+	static uint8_t Pos[6];
+	uint8_t index = 0;
 	for(;;)
 	{
 	  if (xSemaphoreTake(UartRxReady, 0) == pdPASS) {
@@ -226,9 +222,9 @@ void StartDefaultTask(void *argument)
 //			  index=0;
 //		  }
 	  }
-//	  else{
-//		  BSP_W25Qx_Init();
-//	  }
+	  else{
+		  BSP_W25Qx_Init();
+	  }
 //	  BSP_W25Qx_Init();
 //	  uint8_t ID[2]={0};
 //	  BSP_W25Qx_Read_ID(ID);
