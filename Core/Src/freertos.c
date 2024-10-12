@@ -44,6 +44,7 @@ SemaphoreHandle_t txComplete = NULL;
 SemaphoreHandle_t rxComplete = NULL;
 SemaphoreHandle_t spiMutex = NULL;
 SemaphoreHandle_t UartRxReady = NULL;
+static uint8_t Pos[16];
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -138,93 +139,90 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-	static uint8_t Pos[6];
 	uint8_t index = 0;
+	for(int i=0;i<16;i++)
+	{
+		Pos[i] = i+56;
+	}
 	for(;;)
 	{
+//		LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_9);
+//		LL_mDelay(100);
+//		UART_DMA_Transmit(Pos, 16);
+//		LL_mDelay(10);
 	  if (xSemaphoreTake(UartRxReady, 0) == pdPASS) {
-			xQueueReceive(UartRxQueue, &state, portMAX_DELAY);
-			  switch(state)
-			  {
-			  case 0:
-			  {
-				  para[0] = 0.0;
-				  para[1] = 0.0;
-				  para[2] = 1.0;
-				  para[3] = 0.0;
-				  UART_DMA_Transmit((uint8_t *)para, 16);
-				  break;
-			  }
-			  case 1:
-			  {
-				  para[0] = 1.0;
-				  para[1] = 0.0;
-				  para[2] = 1.0;
-				  para[3] = 0.0;
-				  UART_DMA_Transmit((uint8_t *)para, 16);
-				  break;
-			  }
-			  case 2:
-			  {
-				  para[0] = 0.0;
-				  para[1] = 1.0;
-				  para[2] = 1.0;
-				  para[3] = 0.0;
-				  UART_DMA_Transmit((uint8_t *)para, 16);
-				  break;
-			  }
-			  case 3:
-			  {
-				  para[0] = -1.0;
-				  para[1] = 0.0;
-				  para[2] = 1.0;
-				  para[3] = 0.0;
-				  UART_DMA_Transmit((uint8_t *)para, 16);
-				  break;
-			  }
-			  case 4:
-			  {
-				  para[0] = 0.0;
-				  para[1] = -1.0;
-				  para[2] = 1.0;
-				  para[3] = 0.0;
-				  UART_DMA_Transmit((uint8_t *)para, 16);
-				  break;
-			  }
-			  case 5:
-			  {
-				  for(int i=0;i<4;i++)
-				  {
-					  para[i] = 0.0;
-				  }
-				  UART_DMA_Transmit((uint8_t *)para, 16);
-				  break;
-			  }
-			  }
-//		  while (index < 16 && xQueueReceive(UartRxQueue, &Pos[index], 0) == pdPASS) {
-////			  if(Pos[index]!=0){
-//				  LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_9);
-//				  LL_mDelay(100);
-//				  index++;
+////			xQueueReceive(UartRxQueue, &state, portMAX_DELAY);
+////			  switch(state)
+////			  {
+////			  case 0:
+////			  {
+////				  para[0] = 0.0;
+////				  para[1] = 0.0;
+////				  para[2] = 1.0;
+////				  para[3] = 0.0;
+////				  UART_DMA_Transmit((uint8_t *)para, 16);
+////				  break;
 ////			  }
-//		  }
-//		  if(index == 16)
-//		  {
-//			  if(flag == 0)
-//			  {
-//				  UART_DMA_Transmit(Pos, 16);
-//				  flag = 1;
-//			  }
-//			  else
-//			  {
-//				  UART_DMA_Transmit(Pos, 16);
-//			  }
-//			  index=0;
-//		  }
+////			  case 1:
+////			  {
+////				  para[0] = 1.0;
+////				  para[1] = 0.0;
+////				  para[2] = 1.0;
+////				  para[3] = 0.0;
+////				  UART_DMA_Transmit((uint8_t *)para, 16);
+////				  break;
+////			  }
+////			  case 2:
+////			  {
+////				  para[0] = 0.0;
+////				  para[1] = 1.0;
+////				  para[2] = 1.0;
+////				  para[3] = 0.0;
+////				  UART_DMA_Transmit((uint8_t *)para, 16);
+////				  break;
+////			  }
+////			  case 3:
+////			  {
+////				  para[0] = -1.0;
+////				  para[1] = 0.0;
+////				  para[2] = 1.0;
+////				  para[3] = 0.0;
+////				  UART_DMA_Transmit((uint8_t *)para, 16);
+////				  break;
+////			  }
+////			  case 4:
+////			  {
+////				  para[0] = 0.0;
+////				  para[1] = -1.0;
+////				  para[2] = 1.0;
+////				  para[3] = 0.0;
+////				  UART_DMA_Transmit((uint8_t *)para, 16);
+////				  break;
+////			  }
+////			  case 5:
+////			  {
+////				  for(int i=0;i<4;i++)
+////				  {
+////					  para[i] = 0.0;
+////				  }
+////				  UART_DMA_Transmit((uint8_t *)para, 16);
+////				  break;
+////			  }
+////			  }
+		  while (index < 16 && xQueueReceive(UartRxQueue, &Pos[index], 0) == pdPASS) {
+				  index++;
+		  }
+		  if(index == 16)
+		  {
+//			  LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_9);
+//			  LL_mDelay(100);
+			  UART_DMA_Transmit(Pos, 16);
+			  index=0;
+		  }
 	  }
-	  else{
-		  BSP_W25Qx_Init();
-	  }
+//	  else{
+//		  BSP_W25Qx_Init();
+//	  }
 //	  BSP_W25Qx_Init();
 //	  uint8_t ID[2]={0};
 //	  BSP_W25Qx_Read_ID(ID);

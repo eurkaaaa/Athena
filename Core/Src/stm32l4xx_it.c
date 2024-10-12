@@ -350,13 +350,11 @@ void USART3_IRQHandler(void)
     if (LL_USART_IsActiveFlag_RXNE(USART3)) {
         received_data = LL_USART_ReceiveData8(USART3);
         xQueueSendFromISR(UartRxQueue, &received_data, &xHigherPriorityTaskWoken);
-//        count++;
-//        if(count >= 6){
-//		  LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_9);
-//		  LL_mDelay(100);
+        count++;
+        if(count >= 16){
         	UartRxCallback();
-//        	count=0;
-//        }
+        	count=0;
+        }
     }
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
   /* USER CODE END USART3_IRQn 0 */
