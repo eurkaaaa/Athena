@@ -44,7 +44,9 @@ SemaphoreHandle_t txComplete = NULL;
 SemaphoreHandle_t rxComplete = NULL;
 SemaphoreHandle_t spiMutex = NULL;
 SemaphoreHandle_t UartRxReady = NULL;
-static uint8_t Pos[16];
+static uint8_t Pos[26];
+static uint8_t Pos_new[17];
+static float para[6];
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -135,115 +137,61 @@ void MX_FREERTOS_Init(void) {
   */
 
 /* USER CODE END Header_StartDefaultTask */
+void compute()
+{
+	switch(Pos[24])
+	{
+	case 0:
+		//add more control 1up 0down
+		if(Pos[25])
+		{
+			memcpy(para, (float *)Pos, 16);
+			para[2] = 0.5f;
+			memcpy(Pos_new, (uint8_t *)para, 16);
+			Pos_new[16] = 0;
+		}
+		else
+		{
+			Pos_new[16] = 3;
+		}
+		break;
+	case 1:
+		if(Pos[25])
+		{
+			memcpy(para, (float *)Pos, 16);
+			para[0] += 0.3f;
+			memcpy(Pos_new, (uint8_t *)para, 16);
+			Pos_new[16] = 1;
+		}
+		else
+		{
+			memcpy(para, (float *)Pos, 16);
+			para[2] = 0.5f;
+			memcpy(Pos_new, (uint8_t *)para, 16);
+			Pos_new[16] = 2;
+		}
+		break;
+	}
+}
+
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
 	uint8_t index = 0;
-	for(int i=0;i<16;i++)
-	{
-		Pos[i] = i+56;
-	}
 	for(;;)
 	{
-//		LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_9);
-//		LL_mDelay(100);
-//		UART_DMA_Transmit(Pos, 16);
-//		LL_mDelay(10);
 	  if (xSemaphoreTake(UartRxReady, 0) == pdPASS) {
-////			xQueueReceive(UartRxQueue, &state, portMAX_DELAY);
-////			  switch(state)
-////			  {
-////			  case 0:
-////			  {
-////				  para[0] = 0.0;
-////				  para[1] = 0.0;
-////				  para[2] = 1.0;
-////				  para[3] = 0.0;
-////				  UART_DMA_Transmit((uint8_t *)para, 16);
-////				  break;
-////			  }
-////			  case 1:
-////			  {
-////				  para[0] = 1.0;
-////				  para[1] = 0.0;
-////				  para[2] = 1.0;
-////				  para[3] = 0.0;
-////				  UART_DMA_Transmit((uint8_t *)para, 16);
-////				  break;
-////			  }
-////			  case 2:
-////			  {
-////				  para[0] = 0.0;
-////				  para[1] = 1.0;
-////				  para[2] = 1.0;
-////				  para[3] = 0.0;
-////				  UART_DMA_Transmit((uint8_t *)para, 16);
-////				  break;
-////			  }
-////			  case 3:
-////			  {
-////				  para[0] = -1.0;
-////				  para[1] = 0.0;
-////				  para[2] = 1.0;
-////				  para[3] = 0.0;
-////				  UART_DMA_Transmit((uint8_t *)para, 16);
-////				  break;
-////			  }
-////			  case 4:
-////			  {
-////				  para[0] = 0.0;
-////				  para[1] = -1.0;
-////				  para[2] = 1.0;
-////				  para[3] = 0.0;
-////				  UART_DMA_Transmit((uint8_t *)para, 16);
-////				  break;
-////			  }
-////			  case 5:
-////			  {
-////				  for(int i=0;i<4;i++)
-////				  {
-////					  para[i] = 0.0;
-////				  }
-////				  UART_DMA_Transmit((uint8_t *)para, 16);
-////				  break;
-////			  }
-////			  }
-		  while (index < 16 && xQueueReceive(UartRxQueue, &Pos[index], 0) == pdPASS) {
+		  while (index < 26 && xQueueReceive(UartRxQueue, &Pos[index], 0) == pdPASS) {
 				  index++;
 		  }
-		  if(index == 16)
+		  if(index == 26)
 		  {
-//			  LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_9);
-//			  LL_mDelay(100);
-			  UART_DMA_Transmit(Pos, 16);
+			  compute();
+			  UART_DMA_Transmit(Pos_new, 17);
 			  index=0;
 		  }
 	  }
-//	  else{
-//		  BSP_W25Qx_Init();
-//	  }
-//	  BSP_W25Qx_Init();
-//	  uint8_t ID[2]={0};
-//	  BSP_W25Qx_Read_ID(ID);
-//	  //BSP_W25Qx_Erase_Chip();
-//	  BSP_W25Qx_Erase_Block(0x123456);
-//	  uint8_t tx_data[128] = {0xef};
-//	  uint8_t rx_data[128] = {0x00};
-//	  BSP_W25Qx_Write(tx_data, 0x123456, 128);
-//	  BSP_W25Qx_Read(rx_data, 0x123456, 4);
-//	  BSP_W25Qx_Erase_Block(0x123456);
-//	  BSP_W25Qx_Read(rx_data, 0x123456, 4);
-//
-//	  uint8_t ID[4];
-//	  I2C_expander_initialize();
-//	  initialize_sensors_I2C(&vl53l5dev_f,1);
-//	  vl53l5cx_start_ranging(&vl53l5dev_f);
-//	  while(1){
-//		  LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_9);
-//	  	  LL_mDelay(100);
-//	  	  get_sensor_data(&vl53l5dev_f, &vl53l5_res_f);
-//	  }
   }
   /* USER CODE END StartDefaultTask */
 }
