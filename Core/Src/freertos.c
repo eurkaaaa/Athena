@@ -44,7 +44,12 @@ SemaphoreHandle_t txComplete = NULL;
 SemaphoreHandle_t rxComplete = NULL;
 SemaphoreHandle_t spiMutex = NULL;
 SemaphoreHandle_t UartRxReady = NULL;
-static uint8_t Pos[16];
+static uint8_t Pos[26];
+static uint8_t Pos_new[17];
+static float para[4];
+static float padX = 0.0;
+static float padY = 0.0;
+static float padZ = 0.0;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -74,7 +79,7 @@ const osThreadAttr_t defaultTask_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
-
+void compute();
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
@@ -135,12 +140,70 @@ void MX_FREERTOS_Init(void) {
   */
 
 /* USER CODE END Header_StartDefaultTask */
+void para_get()
+{
+  padX = para[0];
+  padY = para[1];
+  padZ = para[2];
+}
+
+void para_reget()
+{
+  para[0] = padX;
+  para[1] = padY;
+  para[2] = padZ;
+}
+
+void compute()
+{
+	switch(Pos[24])
+	{
+	case 0:
+		//add more control 1up 0down
+		if(Pos[25])
+		{
+			padZ = 0.3f;
+			Pos_new[16] = 1;
+		}
+		else
+		{
+			Pos_new[16] = 0;
+		}
+		break;
+	case 1:
+		if(Pos[25])
+		{
+      if(padX < 1.5f && padY < 1.5f && padZ < 1.5f)
+      {
+         padX += 0.1f;
+      }
+      else if(padX >= 1.5f && padY < 1.5f && padZ < 1.5f)
+      {
+         padY += 0.1f;
+      }
+      else if(padX >= 1.5f && padY >= 1.5f && padZ < 1.5f)
+      {
+         padZ += 0.1f;
+      }
+			Pos_new[16] = 2;
+		}
+		else
+		{
+			padZ = 0.3f;
+			Pos_new[16] = 3;
+		}
+		break;
+  default:
+      break;
+	}
+}
+
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
 	uint8_t index = 0;
-	for(int i=0;i<16;i++)
+	for(int i=0;i<36;i++)
 	{
 		Pos[i] = i+56;
 	}
@@ -151,72 +214,18 @@ void StartDefaultTask(void *argument)
 //		UART_DMA_Transmit(Pos, 16);
 //		LL_mDelay(10);
 	  if (xSemaphoreTake(UartRxReady, 0) == pdPASS) {
-////			xQueueReceive(UartRxQueue, &state, portMAX_DELAY);
-////			  switch(state)
-////			  {
-////			  case 0:
-////			  {
-////				  para[0] = 0.0;
-////				  para[1] = 0.0;
-////				  para[2] = 1.0;
-////				  para[3] = 0.0;
-////				  UART_DMA_Transmit((uint8_t *)para, 16);
-////				  break;
-////			  }
-////			  case 1:
-////			  {
-////				  para[0] = 1.0;
-////				  para[1] = 0.0;
-////				  para[2] = 1.0;
-////				  para[3] = 0.0;
-////				  UART_DMA_Transmit((uint8_t *)para, 16);
-////				  break;
-////			  }
-////			  case 2:
-////			  {
-////				  para[0] = 0.0;
-////				  para[1] = 1.0;
-////				  para[2] = 1.0;
-////				  para[3] = 0.0;
-////				  UART_DMA_Transmit((uint8_t *)para, 16);
-////				  break;
-////			  }
-////			  case 3:
-////			  {
-////				  para[0] = -1.0;
-////				  para[1] = 0.0;
-////				  para[2] = 1.0;
-////				  para[3] = 0.0;
-////				  UART_DMA_Transmit((uint8_t *)para, 16);
-////				  break;
-////			  }
-////			  case 4:
-////			  {
-////				  para[0] = 0.0;
-////				  para[1] = -1.0;
-////				  para[2] = 1.0;
-////				  para[3] = 0.0;
-////				  UART_DMA_Transmit((uint8_t *)para, 16);
-////				  break;
-////			  }
-////			  case 5:
-////			  {
-////				  for(int i=0;i<4;i++)
-////				  {
-////					  para[i] = 0.0;
-////				  }
-////				  UART_DMA_Transmit((uint8_t *)para, 16);
-////				  break;
-////			  }
-////			  }
-		  while (index < 16 && xQueueReceive(UartRxQueue, &Pos[index], 0) == pdPASS) {
+
+		  while (index < 26 && xQueueReceive(UartRxQueue, &Pos[index], 0) == pdPASS) {
 				  index++;
 		  }
-		  if(index == 16)
+		  if(index == 26)
 		  {
-//			  LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_9);
-//			  LL_mDelay(100);
-			  UART_DMA_Transmit(Pos, 16);
+        memcpy(para, (float *)Pos, 16);
+        para_get();
+        compute();
+        para_reget();
+        memcpy(Pos_new, (uint8_t *)para, 16);
+			  UART_DMA_Transmit(Pos, 17);
 			  index=0;
 		  }
 	  }

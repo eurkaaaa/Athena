@@ -351,7 +351,7 @@ void USART3_IRQHandler(void)
         received_data = LL_USART_ReceiveData8(USART3);
         xQueueSendFromISR(UartRxQueue, &received_data, &xHigherPriorityTaskWoken);
         count++;
-        if(count >= 16){
+        if(count >= 26){
         	UartRxCallback();
         	count=0;
         }
