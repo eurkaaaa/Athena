@@ -78,6 +78,7 @@ const osThreadAttr_t defaultTask_attributes = {
 
 /* USER CODE END FunctionPrototypes */
 
+
 void StartDefaultTask(void *argument);
 void compute();
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -173,18 +174,18 @@ void compute()
 	case 1:
 		if(Pos[25])
 		{
-      if(padX < 1.5f && padY < 1.5f && padZ < 1.5f)
-      {
+//      if(padX < 1.5f && padY < 1.5f && padZ < 1.5f)
+//      {
          padX += 0.1f;
-      }
-      else if(padX >= 1.5f && padY < 1.5f && padZ < 1.5f)
-      {
-         padY += 0.1f;
-      }
-      else if(padX >= 1.5f && padY >= 1.5f && padZ < 1.5f)
-      {
-         padZ += 0.1f;
-      }
+//      }
+//      else if(padX >= 1.5f && padY < 1.5f && padZ < 1.5f)
+//      {
+//         padY += 0.1f;
+//      }
+//      else if(padX >= 1.5f && padY >= 1.5f && padZ < 1.5f)
+//      {
+//         padZ += 0.1f;
+//      }
 			Pos_new[16] = 2;
 		}
 		else
@@ -193,8 +194,6 @@ void compute()
 			Pos_new[16] = 3;
 		}
 		break;
-  default:
-      break;
 	}
 }
 
@@ -203,10 +202,10 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
 	uint8_t index = 0;
-	for(int i=0;i<36;i++)
-	{
-		Pos[i] = i+56;
-	}
+//	for(int i=0;i<36;i++)
+//	{
+//		Pos[i] = i+56;
+//	}
 	for(;;)
 	{
 //		LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_9);
@@ -225,8 +224,8 @@ void StartDefaultTask(void *argument)
         compute();
         para_reget();
         memcpy(Pos_new, (uint8_t *)para, 16);
-			  UART_DMA_Transmit(Pos, 17);
-			  index=0;
+		UART_DMA_Transmit(Pos_new, 17);
+		index=0;
 		  }
 	  }
 //	  else{
