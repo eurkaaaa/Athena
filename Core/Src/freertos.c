@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include <dw3000_cbll.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
@@ -38,7 +37,7 @@
 #include "dwTypes.h"
 #include "dw3000_cbll.h"
 #include "adhocuwb.h"
-
+#include "uart_receive.h"
 
 /* USER CODE END Includes */
 
@@ -53,7 +52,12 @@ SemaphoreHandle_t spiDeckRxComplete = NULL;
 SemaphoreHandle_t spiDeckMutex = NULL;
 SemaphoreHandle_t uwbIrqSemaphore = NULL;
 uint8_t uwbdata_tx[260];
-
+static uint8_t Pos[26];
+static uint8_t Pos_new[17];
+static float para[4];
+static float padX = 0.0;
+static float padY = 0.0;
+static float padZ = 0.0;
 //拔尖基地展示
 float datas_f[6];
 
@@ -129,6 +133,50 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   * @param  None
   * @retval None
   */
+void para_get()
+{
+  padX = para[0];
+  padY = para[1];
+  padZ = para[2];
+}
+
+void para_reget()
+{
+  para[0] = padX;
+  para[1] = padY;
+  para[2] = padZ;
+}
+
+void compute()
+{
+	switch(Pos[24])
+	{
+	case 0:
+		//add more control 1up 0down
+		if(Pos[25])
+		{
+			padZ = 0.3f;
+			Pos_new[16] = 1;
+		}
+		else
+		{
+			Pos_new[16] = 0;
+		}
+		break;
+	case 1:
+		if(Pos[25])
+		{
+			Pos_new[16] = 2;
+		}
+		else
+		{
+			padZ = 0.3f;
+			Pos_new[16] = 3;
+		}
+		break;
+	}
+}
+
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 	txComplete = xSemaphoreCreateBinary();
@@ -191,9 +239,25 @@ void StartDefaultTask(void *argument)
 //	static uint8_t w25qID;
 //	BSP_W25Qx_Read_ID(&w25qID);
 
-
+	  uint8_t index = 0;
 	  while(1)
 	  {
+		  if (xSemaphoreTake(UartRxReady, 0) == pdPASS) {
+
+			  while (index < 26 && xQueueReceive(UartRxQueue, &Pos[index], 0) == pdPASS) {
+					  index++;
+			  }
+			  if(index == 26)
+			  {
+	        memcpy(para, (float *)Pos, 16);
+	        para_get();
+	        compute();
+	        para_reget();
+	        memcpy(Pos_new, (uint8_t *)para, 16);
+			UART_DMA_Transmit(Pos_new, 17);
+			index=0;
+			  }
+		  }
 		  vTaskDelay(1);
 	  }
 //	  BSP_W25Qx_Init();

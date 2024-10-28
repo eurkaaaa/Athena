@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include <dw3000_cbll.h>
 #include "main.h"
 #include "stm32l4xx_it.h"
 #include "FreeRTOS.h"
@@ -29,7 +28,8 @@
 #include "task.h"
 #include "spi_drv.h"
 #include "cmsis_os.h"
-
+#include "uart_receive.h"
+#include "stm32l4xx_ll_gpio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,7 +64,9 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-
+extern DMA_HandleTypeDef hdma_usart3_rx;
+extern DMA_HandleTypeDef hdma_usart3_tx;
+extern UART_HandleTypeDef huart3;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -168,7 +170,8 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
 
   /* USER CODE END SysTick_IRQn 0 */
-  #if (INCLUDE_xTaskGetSchedulerState == 1 )
+  HAL_IncTick();
+#if (INCLUDE_xTaskGetSchedulerState == 1 )
   if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
   {
 #endif /* INCLUDE_xTaskGetSchedulerState */
@@ -189,54 +192,6 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles EXTI line4 interrupt.
-  */
-void EXTI4_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI4_IRQn 0 */
-
-  /* USER CODE END EXTI4_IRQn 0 */
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_4) != RESET)
-  {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
-    /* USER CODE BEGIN LL_EXTI_LINE_4 */
-
-    portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
-    if(uwbISRTaskHandle) {
-      vTaskNotifyGiveFromISR(uwbISRTaskHandle, &xHigherPriorityTaskWoken);
-    }
-	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-
-    /* USER CODE END LL_EXTI_LINE_4 */
-  }
-  /* USER CODE BEGIN EXTI4_IRQn 1 *
-
-  /* USER CODE END EXTI4_IRQn 1 */
-}
-
-void EXTI15_10_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
-
-  /* USER CODE END EXTI15_10_IRQn 0 */
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_13) != RESET)
-  {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_13);
-    /* USER CODE BEGIN LL_EXTI_LINE_13 */
-    portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
-    if(uwbISRTaskHandle) {
-      vTaskNotifyGiveFromISR(uwbISRTaskHandle, &xHigherPriorityTaskWoken);
-    }
-	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-
-    /* USER CODE END LL_EXTI_LINE_13 */
-  }
-  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
-
-  /* USER CODE END EXTI15_10_IRQn 1 */
-}
-
-/**
   * @brief This function handles DMA1 channel2 global interrupt.
   */
 void DMA1_Channel2_IRQHandler(void)
@@ -244,7 +199,7 @@ void DMA1_Channel2_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel2_IRQn 0 */
 
   /* USER CODE END DMA1_Channel2_IRQn 0 */
-
+//  HAL_DMA_IRQHandler(&hdma_usart3_tx);
   /* USER CODE BEGIN DMA1_Channel2_IRQn 1 */
 
   /* USER CODE END DMA1_Channel2_IRQn 1 */
@@ -258,7 +213,7 @@ void DMA1_Channel3_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel3_IRQn 0 */
 
   /* USER CODE END DMA1_Channel3_IRQn 0 */
-
+//  HAL_DMA_IRQHandler(&hdma_usart3_rx);
   /* USER CODE BEGIN DMA1_Channel3_IRQn 1 */
 
   /* USER CODE END DMA1_Channel3_IRQn 1 */
@@ -270,13 +225,13 @@ void DMA1_Channel3_IRQHandler(void)
 void DMA1_Channel4_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel4_IRQn 0 */
-	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	if (LL_DMA_IsActiveFlag_TC4(DMA1)){
-		LL_DMA_ClearFlag_TC4(DMA1);
-		LL_SPI_DisableDMAReq_RX(SPI2);
-		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4);
-		xSemaphoreGiveFromISR(spiDeckRxComplete, &xHigherPriorityTaskWoken);
-	}
+//	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+//	if (LL_DMA_IsActiveFlag_TC4(DMA1)){
+//		LL_DMA_ClearFlag_TC4(DMA1);
+//		LL_SPI_DisableDMAReq_RX(SPI2);
+//		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_4);
+//		xSemaphoreGiveFromISR(spiDeckRxComplete, &xHigherPriorityTaskWoken);
+//	}
 
   /* USER CODE END DMA1_Channel4_IRQn 0 */
 
@@ -291,13 +246,13 @@ void DMA1_Channel4_IRQHandler(void)
 void DMA1_Channel5_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel5_IRQn 0 */
-	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	if (LL_DMA_IsActiveFlag_TC5(DMA1)){
-		LL_DMA_ClearFlag_TC5(DMA1);
-		LL_SPI_DisableDMAReq_TX(SPI2);
-		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_5);
-		xSemaphoreGiveFromISR(spiDeckTxComplete, &xHigherPriorityTaskWoken);
-	}
+//	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+//	if (LL_DMA_IsActiveFlag_TC5(DMA1)){
+//		LL_DMA_ClearFlag_TC5(DMA1);
+//		LL_SPI_DisableDMAReq_TX(SPI2);
+//		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_5);
+//		xSemaphoreGiveFromISR(spiDeckTxComplete, &xHigherPriorityTaskWoken);
+//	}
 
   /* USER CODE END DMA1_Channel5_IRQn 0 */
 
@@ -373,6 +328,58 @@ void SPI2_IRQHandler(void)
   /* USER CODE BEGIN SPI2_IRQn 1 */
 
   /* USER CODE END SPI2_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART3 global interrupt.
+  */
+void USART3_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART3_IRQn 0 */
+//	HAL_UART_IRQHandler(&huart3);
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    uint8_t received_data;
+    static int count = 0;
+
+    if (LL_USART_IsActiveFlag_RXNE(USART3)) {
+        received_data = LL_USART_ReceiveData8(USART3);
+        xQueueSendFromISR(UartRxQueue, &received_data, &xHigherPriorityTaskWoken);
+        count++;
+        if(count >= 26){
+        	UartRxCallback();
+        	count=0;
+        }
+    }
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+  /* USER CODE END USART3_IRQn 0 */
+  /* USER CODE BEGIN USART3_IRQn 1 */
+
+  /* USER CODE END USART3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles EXTI line[15:10] interrupts.
+  */
+void EXTI15_10_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
+
+  /* USER CODE END EXTI15_10_IRQn 0 */
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_13) != RESET)
+  {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_13);
+    /* USER CODE BEGIN LL_EXTI_LINE_13 */
+    portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
+    if(uwbISRTaskHandle) {
+      vTaskNotifyGiveFromISR(uwbISRTaskHandle, &xHigherPriorityTaskWoken);
+    }
+	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+
+    /* USER CODE END LL_EXTI_LINE_13 */
+  }
+  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
+
+  /* USER CODE END EXTI15_10_IRQn 1 */
 }
 
 /**
@@ -455,34 +462,6 @@ void DMA2_Channel4_IRQHandler(void)
   /* USER CODE BEGIN DMA2_Channel4_IRQn 1 */
 
   /* USER CODE END DMA2_Channel4_IRQn 1 */
-}
-
-/**
-  * @brief This function handles I2C3 event interrupt.
-  */
-void I2C3_EV_IRQHandler(void)
-{
-  /* USER CODE BEGIN I2C3_EV_IRQn 0 */
-
-  /* USER CODE END I2C3_EV_IRQn 0 */
-
-  /* USER CODE BEGIN I2C3_EV_IRQn 1 */
-
-  /* USER CODE END I2C3_EV_IRQn 1 */
-}
-
-/**
-  * @brief This function handles I2C3 error interrupt.
-  */
-void I2C3_ER_IRQHandler(void)
-{
-  /* USER CODE BEGIN I2C3_ER_IRQn 0 */
-
-  /* USER CODE END I2C3_ER_IRQn 0 */
-
-  /* USER CODE BEGIN I2C3_ER_IRQn 1 */
-
-  /* USER CODE END I2C3_ER_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
